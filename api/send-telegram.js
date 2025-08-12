@@ -5,8 +5,8 @@ export default async function handler(req, res) {
 
   const { title, data, page, ts } = req.body || {};
 
-  if (!title || !data) {
-    return res.status(400).json({ ok: false, error: "Missing required fields" });
+  if (!title || !data || typeof data !== 'object') {
+    return res.status(400).json({ ok: false, error: "Missing or invalid required fields" });
   }
 
   const token = process.env.TELEGRAM_TOKEN;
@@ -34,7 +34,11 @@ export default async function handler(req, res) {
       }),
     });
 
-    if (!tgRes.ok) throw new Error("Telegram API request failed");
+    if (!tgRes.ok) {
+      const errorText = await tgRes.text();
+      console.error("Telegram API error:", tgRes.status, errorText);
+      throw new Error("Telegram API request failed");
+    }
 
     res.status(200).json({ ok: true });
   } catch (err) {
