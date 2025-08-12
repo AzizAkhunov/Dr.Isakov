@@ -159,7 +159,7 @@ confirmModal?.addEventListener('click', (e) => { if (e.target === confirmModal) 
 
 async function sendToServer(payload) {
   try {
-    const res = await fetch('http://localhost:3000/send-telegram', {
+    const res = await fetch('/api/send-telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
