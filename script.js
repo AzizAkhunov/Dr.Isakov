@@ -136,7 +136,7 @@ if (statsSection) {
 // Hover play previews (muted on hover to ensure autoplay works)
 const previews = document.querySelectorAll('.preview-video');
 previews.forEach(v => {
-  v.muted = true;
+  v.muted = false;
   v.playsInline = true;
   v.addEventListener('mouseenter', () => { v.play().catch(()=>{}); });
   v.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
