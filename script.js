@@ -287,7 +287,7 @@ toggle?.addEventListener('click', () => {
 backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
 // ---------- Toast рядом с кнопкой ----------
-function showToastNearButton(button, message, isSuccess = true) {
+function showToast(button, message, isSuccess = true) {
   const toast = document.createElement('div');
   toast.innerHTML = isSuccess 
     ? `<span style="margin-right:8px;">✅</span> ${message}` 
