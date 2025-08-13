@@ -13,8 +13,16 @@ export default async function handler(req, res) {
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
-    return chatId;
+    return res.status(500).json({
+      ok: false,
+      error: "Server misconfiguration",
+      token: token,
+      chatId: chatId
+    });
   }
+  // if (!token || !chatId) {
+  //   return res.status(500).json({ ok: false, error: "Server misconfiguration" });
+  // }
 
   const text =
     `📩 <b>${title}</b>\n\n` +
