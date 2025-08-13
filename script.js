@@ -133,7 +133,6 @@ if (statsSection) {
   statsObserver.observe(statsSection);
 }
 
-// Hover play previews (muted on hover to ensure autoplay works)
 // Hover play previews
 const previews = document.querySelectorAll('.preview-video');
 previews.forEach(v => {
@@ -177,6 +176,19 @@ previews.forEach(v => {
     v.parentElement.appendChild(muteBtn);
   }
 });
+
+
+// Forms validation helper
+function isValidPhone(value) {
+  return /^\+?\d[\d\s()\-]{7,}$/.test(value);
+}
+
+const confirmModal = document.getElementById('confirmModal');
+const confirmClose = document.querySelector('.confirm-close');
+function openConfirm() { confirmModal?.classList.add('active'); }
+function closeConfirm() { confirmModal?.classList.remove('active'); }
+confirmClose?.addEventListener('click', closeConfirm);
+confirmModal?.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirm(); });
 
 // ---------- SAFE TELEGRAM SENDING (front-end) ----------
 // Note: no bot token here. We send to a server endpoint which holds the token securely.
