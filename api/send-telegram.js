@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: "Missing or invalid required fields" });
   }
 
-  const token = process.env.TELEGRAM_TOKEN;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   // if (!token || !chatId) {
