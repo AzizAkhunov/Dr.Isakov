@@ -134,25 +134,49 @@ if (statsSection) {
 }
 
 // Hover play previews (muted on hover to ensure autoplay works)
+// Hover play previews
 const previews = document.querySelectorAll('.preview-video');
 previews.forEach(v => {
   v.muted = false;
   v.playsInline = true;
+
   v.addEventListener('mouseenter', () => { v.play().catch(()=>{}); });
-  v.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
+  v.addEventListener('mouseleave', (e) => { 
+    if (!e.relatedTarget || !e.relatedTarget.classList.contains('mute-btn')) {
+      v.pause();
+      v.currentTime = 0;
+    }
+  });
+
+  const muteBtn = document.createElement('button');
+  muteBtn.innerHTML = v.muted ? '🔇' : '🔊';
+  muteBtn.classList.add('mute-btn');
+
+  muteBtn.style.position = 'absolute';
+  muteBtn.style.top = '10px'; // верхний край
+  muteBtn.style.left = '10px'; // левый край
+  muteBtn.style.zIndex = '10';
+  muteBtn.style.background = 'rgba(0,0,0,0.5)';
+  muteBtn.style.color = '#fff';
+  muteBtn.style.border = 'none';
+  muteBtn.style.padding = '5px 10px';
+  muteBtn.style.cursor = 'pointer';
+  muteBtn.style.borderRadius = '5px';
+  muteBtn.style.fontSize = '18px';
+
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    v.muted = !v.muted;
+    muteBtn.innerHTML = v.muted ? '🔇' : '🔊';
+  });
+
+  muteBtn.addEventListener('mouseenter', () => { v.play().catch(()=>{}); });
+
+  if (v.parentElement) {
+    v.parentElement.style.position = 'relative';
+    v.parentElement.appendChild(muteBtn);
+  }
 });
-
-// Forms validation helper
-function isValidPhone(value) {
-  return /^\+?\d[\d\s()\-]{7,}$/.test(value);
-}
-
-const confirmModal = document.getElementById('confirmModal');
-const confirmClose = document.querySelector('.confirm-close');
-function openConfirm() { confirmModal?.classList.add('active'); }
-function closeConfirm() { confirmModal?.classList.remove('active'); }
-confirmClose?.addEventListener('click', closeConfirm);
-confirmModal?.addEventListener('click', (e) => { if (e.target === confirmModal) closeConfirm(); });
 
 // ---------- SAFE TELEGRAM SENDING (front-end) ----------
 // Note: no bot token here. We send to a server endpoint which holds the token securely.
