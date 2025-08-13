@@ -162,3 +162,20 @@ body.dark footer { border-top-color: rgba(255,255,255,0.08); color: #9aa4b2; }
   .gallery-masonry { columns: 2 160px; }
   .stats { grid-template-columns: 1fr; }
 }
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 18px;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  z-index: 9999;
+  opacity: 0.9;
+}
+.toast.success {
+  background-color: #28a745;
+}
+.toast.error {
+  background-color: #dc3545;
+}
