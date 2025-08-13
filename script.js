@@ -214,8 +214,12 @@ async function sendToServer(payload) {
  */
 function attachFormHandler(form, fields, title) {
   if (!form) return;
+  let isSending = false; // 🚀 блокировка повторной отправки
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
+    if (isSending) return; // если уже отправляем, выходим
+    isSending = true;
 
     // collect + basic sanitize
     const formData = {};
@@ -224,9 +228,9 @@ function attachFormHandler(form, fields, title) {
       const raw = (el?.value || '').trim();
       if (!raw || (f.type === 'phone' && !isValidPhone(raw))) {
         alert('Пожалуйста, корректно заполните все поля.');
+        isSending = false; // ❗ разблокировка при ошибке
         return;
       }
-      // simple sanitize: remove script tags and excessive length
       let safe = raw.replace(/<[^>]*>?/gm, '').slice(0, 200);
       formData[f.label || f.sel.replace('#', '')] = safe;
     }
@@ -238,7 +242,6 @@ function attachFormHandler(form, fields, title) {
       ts: new Date().toISOString()
     };
 
-    // send to serverless function
     const result = await sendToServer(message);
     if (result?.ok) {
       openConfirm();
@@ -247,8 +250,11 @@ function attachFormHandler(form, fields, title) {
       alert('Ошибка отправки. Попробуйте позже.');
       console.error('Server error:', result);
     }
+
+    isSending = false; // 🔓 разблокируем отправку после ответа
   });
 }
+
 
 // wire forms
 attachFormHandler(document.getElementById('appointment-form'), [
