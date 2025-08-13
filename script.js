@@ -214,24 +214,24 @@ async function sendToServer(payload) {
  */
 function attachFormHandler(form, fields, title) {
   if (!form) return;
-  let isSending = false; // 🚀 блокировка повторной отправки
+  let isSending = false;
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (isSending) return; // если уже отправляем, выходим
+    if (isSending) return;
     isSending = true;
 
-    // collect + basic sanitize
+    // collect + sanitize
     const formData = {};
     for (const f of fields) {
       const el = form.querySelector(f.sel);
       const raw = (el?.value || '').trim();
-      if (!raw || (f.type === 'phone' && !isValidPhone(raw))) {
-        alert('Пожалуйста, корректно заполните все поля.');
-        isSending = false; // ❗ разблокировка при ошибке
+      let safe = raw.replace(/<[^>]*>?/gm, '').slice(0, 200);
+      if (f.type === 'phone' && !isValidPhone(safe)) {
+        showToast('Некорректный номер телефона', false);
+        isSending = false;
         return;
       }
-      let safe = raw.replace(/<[^>]*>?/gm, '').slice(0, 200);
       formData[f.label || f.sel.replace('#', '')] = safe;
     }
 
@@ -243,17 +243,20 @@ function attachFormHandler(form, fields, title) {
     };
 
     const result = await sendToServer(message);
+
     if (result?.ok) {
       openConfirm();
       form.reset();
+      showToast('Заявка успешно отправлена!', true);
     } else {
-      alert('Ошибка отправки. Попробуйте позже.');
+      showToast('Ошибка отправки. Попробуйте позже.', false);
       console.error('Server error:', result);
     }
 
-    isSending = false; // 🔓 разблокируем отправку после ответа
+    isSending = false;
   });
 }
+
 
 
 // wire forms
@@ -282,3 +285,32 @@ toggle?.addEventListener('click', () => {
 
 // Back to top
 backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+// ---------- Toast уведомления ----------
+function showToast(message, isSuccess = true) {
+  const toast = document.createElement('div');
+  toast.textContent = message;
+  toast.style.position = 'fixed';
+  toast.style.bottom = '20px';
+  toast.style.right = '20px';
+  toast.style.zIndex = '9999';
+  toast.style.background = isSuccess ? '#4caf50' : '#f44336';
+  toast.style.color = '#fff';
+  toast.style.padding = '10px 15px';
+  toast.style.borderRadius = '5px';
+  toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+  toast.style.fontSize = '14px';
+  toast.style.opacity = '0';
+  toast.style.transition = 'opacity 0.3s ease';
+  
+  document.body.appendChild(toast);
+  
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+  });
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.addEventListener('transitionend', () => toast.remove());
+  }, 3000);
+}
