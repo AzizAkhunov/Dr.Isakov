@@ -212,50 +212,57 @@ async function sendToServer(payload) {
  * attachFormHandler(formElement, fields, title)
  * fields: [{ sel: '#id', label: 'Имя', type: 'phone' }]
  */
-function attachFormHandler(form, fields, title) {
-  if (!form) return;
-  let isSending = false;
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  if (isSending) return;
+  isSending = true;
 
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    if (isSending) return;
-    isSending = true;
+  // ВАЖНО: та самая кнопка, рядом с которой показываем тост
+  const submitBtn = e.submitter || form.querySelector('[type="submit"], button:not([type])');
 
-    // collect + sanitize
-    const formData = {};
-    for (const f of fields) {
-      const el = form.querySelector(f.sel);
-      const raw = (el?.value || '').trim();
-      let safe = raw.replace(/<[^>]*>?/gm, '').slice(0, 200);
-      if (f.type === 'phone' && !isValidPhone(safe)) {
-        showToast('Некорректный номер телефона', false);
-        isSending = false;
-        return;
-      }
-      formData[f.label || f.sel.replace('#', '')] = safe;
+  // collect + sanitize
+  const formData = {};
+  for (const f of fields) {
+    const el = form.querySelector(f.sel);
+    const raw = (el?.value || '').trim();
+
+    if (!raw) {
+      showToastNearButton(submitBtn, 'Заполните все поля', false);
+      isSending = false;
+      return;
     }
 
-    const message = {
-      title: title,
-      data: formData,
-      page: location.href,
-      ts: new Date().toISOString()
-    };
+    let safe = raw.replace(/<[^>]*>?/gm, '').slice(0, 200);
 
-    const result = await sendToServer(message);
-
-    if (result?.ok) {
-      openConfirm();
-      form.reset();
-      showToast('Заявка успешно отправлена!', true);
-    } else {
-      showToast('Ошибка отправки. Попробуйте позже.', false);
-      console.error('Server error:', result);
+    if (f.type === 'phone' && !isValidPhone(safe)) {
+      showToastNearButton(submitBtn, 'Некорректный номер телефона', false);
+      isSending = false;
+      return;
     }
+    formData[f.label || f.sel.replace('#', '')] = safe;
+  }
 
-    isSending = false;
-  });
-}
+  const message = {
+    title: title,
+    data: formData,
+    page: location.href,
+    ts: new Date().toISOString()
+  };
+
+  const result = await sendToServer(message);
+
+  if (result?.ok) {
+    openConfirm();
+    form.reset();
+    showToastNearButton(submitBtn, 'Заявка успешно отправлена!', true);
+  } else {
+    showToastNearButton(submitBtn, 'Ошибка отправки. Попробуйте позже.', false);
+    console.error('Server error:', result);
+  }
+
+  isSending = false;
+});
+
 
 
 
@@ -286,40 +293,74 @@ toggle?.addEventListener('click', () => {
 // Back to top
 backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-// ---------- Toast рядом с кнопкой ----------
-function showToast(button, message, isSuccess = true) {
+// ---------- Toast рядом с кнопкой (надёжное позиционирование) ----------
+function showToastNearButton(button, message, isSuccess = true) {
+  // Фолбэк: если кнопка не найдена — показываем по центру
+  if (!button) {
+    const center = document.createElement('div');
+    center.innerHTML = isSuccess ? `✅ ${message}` : `❌ ${message}`;
+    Object.assign(center.style, {
+      position: 'fixed',
+      left: '50%',
+      top: '20px',
+      transform: 'translateX(-50%)',
+      zIndex: '9999',
+      background: isSuccess ? '#4caf50' : '#f44336',
+      color: '#fff',
+      padding: '10px 16px',
+      borderRadius: '8px',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+      opacity: '0',
+      transition: 'opacity .25s ease, transform .25s ease'
+    });
+    document.body.appendChild(center);
+    requestAnimationFrame(() => { center.style.opacity = '1'; center.style.transform = 'translateX(-50%) translateY(6px)'; });
+    setTimeout(() => {
+      center.style.opacity = '0';
+      center.style.transform = 'translateX(-50%)';
+      center.addEventListener('transitionend', () => center.remove());
+    }, 2500);
+    return;
+  }
+
+  const parent = button.parentElement;
+  if (parent) parent.style.position = parent.style.position || 'relative';
+
+  const btnRect = button.getBoundingClientRect();
+  const parentRect = (parent || document.body).getBoundingClientRect();
+
   const toast = document.createElement('div');
-  toast.innerHTML = isSuccess 
-    ? `<span style="margin-right:8px;">✅</span> ${message}` 
+  toast.innerHTML = isSuccess
+    ? `<span style="margin-right:8px;">✅</span> ${message}`
     : `<span style="margin-right:8px;">❌</span> ${message}`;
 
-  toast.style.position = 'absolute';
-  toast.style.left = `${button.offsetLeft + button.offsetWidth + 10}px`;
-  toast.style.top = `${button.offsetTop}px`;
-  toast.style.background = isSuccess ? '#4caf50' : '#f44336';
-  toast.style.color = '#fff';
-  toast.style.padding = '8px 12px';
-  toast.style.borderRadius = '5px';
-  toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-  toast.style.fontSize = '14px';
-  toast.style.opacity = '0';
-  toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-  toast.style.transform = 'translateY(-5px)';
+  Object.assign(toast.style, {
+    position: 'absolute',
+    left: `${btnRect.right - parentRect.left + 10}px`,
+    top: `${btnRect.top - parentRect.top}px`,
+    background: isSuccess ? '#4caf50' : '#f44336',
+    color: '#fff',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+    fontSize: '14px',
+    opacity: '0',
+    transform: 'translateY(-6px)',
+    transition: 'opacity .25s ease, transform .25s ease',
+    zIndex: '999'
+  });
 
-  // Родитель для позиционирования
-  button.parentElement.style.position = 'relative';
-  button.parentElement.appendChild(toast);
+  (parent || document.body).appendChild(toast);
 
-  // Плавное появление
   requestAnimationFrame(() => {
     toast.style.opacity = '1';
     toast.style.transform = 'translateY(0)';
   });
 
-  // Удаление через 3 секунды
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-5px)';
+    toast.style.transform = 'translateY(-6px)';
     toast.addEventListener('transitionend', () => toast.remove());
-  }, 3000);
+  }, 2500);
 }
+
