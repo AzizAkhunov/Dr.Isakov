@@ -1,3 +1,6 @@
+let lastSent = {};
+const COOLDOWN_MS = 3000; // 3 секунды
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ ok: false, error: "Method Not Allowed" });
@@ -12,17 +15,19 @@ export default async function handler(req, res) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
-  // if (!token || !chatId) {
-  //   return res.status(500).json({
-  //     ok: false,
-  //     error: "Server misconfiguration",
-  //     token: token,
-  //     chatId: chatId
-  //   });
-  // }
   if (!token || !chatId) {
     return res.status(500).json({ ok: false, error: "Server misconfiguration" });
   }
+
+  // Генерируем уникальный ключ для запроса
+  const uniqueKey = `${title}-${JSON.stringify(data)}`;
+  const now = Date.now();
+
+  if (lastSent[uniqueKey] && now - lastSent[uniqueKey] < COOLDOWN_MS) {
+    return res.status(429).json({ ok: false, error: "Duplicate request ignored" });
+  }
+
+  lastSent[uniqueKey] = now;
 
   const text =
     `📩 <b>${title}</b>\n\n` +
