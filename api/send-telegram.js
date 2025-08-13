@@ -1,56 +1,47 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
-  }
+document.getElementById("sendBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("sendBtn");
+  btn.disabled = true;
 
-  const { title, data, page, ts } = req.body || {};
-
-  if (!title || !data || typeof data !== 'object') {
-    return res.status(400).json({ ok: false, error: "Missing or invalid required fields" });
-  }
-
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  // if (!token || !chatId) {
-  //   return res.status(500).json({
-  //     ok: false,
-  //     error: "Server misconfiguration",
-  //     token: token,
-  //     chatId: chatId
-  //   });
-  // }
-  if (!token || !chatId) {
-    return res.status(500).json({ ok: false, error: "Server misconfiguration" });
-  }
-
-  const text =
-    `📩 <b>${title}</b>\n\n` +
-    Object.entries(data)
-      .map(([key, value]) => `• <b>${key}:</b> ${value}`)
-      .join("\n") +
-    `\n\n🌐 Страница: ${page || "—"}\n🕒 ${ts || new Date().toISOString()}`;
+  const payload = {
+    title: "Заявка с сайта",
+    data: {
+      Имя: document.getElementById("name").value,
+      Телефон: document.getElementById("phone").value
+    },
+    page: window.location.href,
+    ts: new Date().toISOString()
+  };
 
   try {
-    const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch("/api/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML"
-      }),
+      body: JSON.stringify(payload)
     });
 
-    if (!tgRes.ok) {
-      const errorText = await tgRes.text();
-      console.error("Telegram API error:", tgRes.status, errorText);
-      throw new Error("Telegram API request failed");
-    }
+    const result = await res.json();
 
-    res.status(200).json({ ok: true });
+    if (result.ok) {
+      showToast("✅ Успешно отправлено!", "success");
+    } else {
+      showToast("❌ Ошибка: " + (result.error || "Неизвестно"), "error");
+    }
   } catch (err) {
-    console.error("Telegram send error:", err);
-    res.status(500).json({ ok: false, error: "Telegram send error" });
+    showToast("❌ Ошибка сети", "error");
   }
+
+  setTimeout(() => {
+    btn.disabled = false;
+  }, 3000);
+});
+
+function showToast(message, type) {
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2500);
 }
