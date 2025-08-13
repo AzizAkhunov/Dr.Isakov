@@ -286,31 +286,40 @@ toggle?.addEventListener('click', () => {
 // Back to top
 backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-// ---------- Toast уведомления ----------
-function showToast(message, isSuccess = true) {
+// ---------- Toast рядом с кнопкой ----------
+function showToastNearButton(button, message, isSuccess = true) {
   const toast = document.createElement('div');
-  toast.textContent = message;
-  toast.style.position = 'fixed';
-  toast.style.bottom = '20px';
-  toast.style.right = '20px';
-  toast.style.zIndex = '9999';
+  toast.innerHTML = isSuccess 
+    ? `<span style="margin-right:8px;">✅</span> ${message}` 
+    : `<span style="margin-right:8px;">❌</span> ${message}`;
+
+  toast.style.position = 'absolute';
+  toast.style.left = `${button.offsetLeft + button.offsetWidth + 10}px`;
+  toast.style.top = `${button.offsetTop}px`;
   toast.style.background = isSuccess ? '#4caf50' : '#f44336';
   toast.style.color = '#fff';
-  toast.style.padding = '10px 15px';
+  toast.style.padding = '8px 12px';
   toast.style.borderRadius = '5px';
   toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
   toast.style.fontSize = '14px';
   toast.style.opacity = '0';
-  toast.style.transition = 'opacity 0.3s ease';
-  
-  document.body.appendChild(toast);
-  
+  toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  toast.style.transform = 'translateY(-5px)';
+
+  // Родитель для позиционирования
+  button.parentElement.style.position = 'relative';
+  button.parentElement.appendChild(toast);
+
+  // Плавное появление
   requestAnimationFrame(() => {
     toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
   });
-  
+
+  // Удаление через 3 секунды
   setTimeout(() => {
     toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-5px)';
     toast.addEventListener('transitionend', () => toast.remove());
   }, 3000);
 }
