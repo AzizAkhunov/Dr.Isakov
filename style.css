@@ -70,7 +70,7 @@ body.dark .icon-moon { display: block; }
 .carousel-track { display: flex; gap: 1rem; transform-style: preserve-3d; overflow: hidden; padding: 1rem; }
 .carousel-item { width: 240px; aspect-ratio: 4/3; border-radius: var(--radius-lg); object-fit: cover; box-shadow: var(--shadow); transition: transform .4s, box-shadow .3s, filter .3s; cursor: pointer; filter: saturate(0.92); }
 .carousel-item:hover { transform: translateY(-6px) rotateY(-4deg) scale(1.03); box-shadow: 0 18px 50px rgba(0,0,0,0.2); }
-.carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.8); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: var(--shadow-soft); color: var(--deep); font-size: 1.6rem; }
+.carousel-btn { position: absolute; top: 50%; transform: translateY(-50%);z-index: 10; ;background: rgba(255,255,255,0.8); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; box-shadow: var(--shadow-soft); color: var(--deep); font-size: 1.6rem; }
 .carousel .prev { left: 6px; }
 .carousel .next { right: 6px; }
 
