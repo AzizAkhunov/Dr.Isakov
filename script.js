@@ -257,6 +257,96 @@ function attachFormHandler(form, fields, title) {
   });
 }
 
+// ====== UZ phone input mask: +998 (AA) XXX-XX-XX, prefix locked ======
+function formatUzPhoneValue(raw) {
+  let digits = (raw || '').replace(/\D/g, '');
+  if (digits.startsWith('998')) digits = digits.slice(3);
+  digits = digits.slice(0, 9);
+
+  const op = digits.slice(0, 2);
+  const p1 = digits.slice(2, 5);
+  const p2 = digits.slice(5, 7);
+  const p3 = digits.slice(7, 9);
+
+  let v = '+998';
+  if (op) {
+    v += ' ';
+    if (op.length === 1) v += '(' + op;
+    else if (op.length === 2) v += '(' + op + ')';
+    else v += '(' + op;
+  }
+  if (op.length === 2) {
+    if (p1) v += ' ' + p1;
+    if (p2) v += '-' + p2;
+    if (p3) v += '-' + p3;
+  }
+  return v;
+}
+
+function attachUzPhoneMask(input) {
+  if (!input) return;
+  const PREFIX = '+998';
+  const PREF_LEN = PREFIX.length;
+
+  input.setAttribute('maxlength', '19');
+  input.setAttribute('pattern', '\\+998 \\(\\d{2}\\) \\d{3}-\\d{2}-\\d{2}');
+  if (!input.placeholder) input.placeholder = '+998 (__) ___-__-__';
+
+  input.addEventListener('focus', () => {
+    if (!input.value.startsWith(PREFIX)) input.value = PREFIX;
+    requestAnimationFrame(() => {
+      const pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    });
+  });
+
+  // удаление префикса запрещаем, но скобки можно
+  input.addEventListener('keydown', (e) => {
+    const start = input.selectionStart ?? 0;
+    if ((e.key === 'Backspace' && start <= PREF_LEN) ||
+        (e.key === 'Delete' && start < PREF_LEN)) {
+      e.preventDefault();
+      input.setSelectionRange(PREF_LEN, PREF_LEN);
+    }
+  });
+
+  input.addEventListener('input', () => {
+    const rawDigits = input.value.replace(/\D/g, '');
+    input.value = formatUzPhoneValue(rawDigits);
+    requestAnimationFrame(() => {
+      const pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    });
+  });
+
+  input.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+    input.value = formatUzPhoneValue(text);
+    requestAnimationFrame(() => {
+      const pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    });
+  });
+
+  input.addEventListener('blur', () => {
+    if (input.value.trim() === PREFIX.trim()) {
+      input.value = '';
+    }
+  });
+}
+
+attachUzPhoneMask(document.getElementById('phone'));
+attachUzPhoneMask(document.getElementById('course-phone'));
+
+function isValidPhone(value) {
+  return /^\+998 \(\d{2}\) \d{3}-\d{2}-\d{2}$/.test((value || '').trim());
+}
+
+
+
+
+
 
 
 // wire forms
@@ -313,4 +403,6 @@ function showToast(message, isSuccess = true) {
     toast.style.opacity = '0';
     toast.addEventListener('transitionend', () => toast.remove());
   }, 3000);
+
+
 }
